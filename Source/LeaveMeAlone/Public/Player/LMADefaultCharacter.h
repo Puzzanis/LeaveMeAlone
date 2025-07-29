@@ -47,6 +47,16 @@ private:
 
 	float FOV = 55.0f;
 
+	
+
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+	
+	//homework 5 
+	const float MaxLengthArm = 1400.0f; // максимальное расстояние камеры от персонажа
+	const float MinLengthArm = 500.0f;	// минимальное расстояние камеры от персонажа
+	const float LengthChange = 20.0f;	// шаг изменения расстояния до персонажа
+
+	void ZoomIn();
+	void ZoomOut();
 };

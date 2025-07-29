@@ -15,17 +15,20 @@ ALMADefaultCharacter::ALMADefaultCharacter()
 
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	SpringArmComponent->SetupAttachment(GetRootComponent());
-	SpringArmComponent->SetUsingAbsoluteRotation(true);
+	SpringArmComponent->SetUsingAbsoluteRotation(true); //данное условие не позволит нашей камере поворачиваться в момент поворота персонажа
 	SpringArmComponent->TargetArmLength = ArmLength;
-	SpringArmComponent->SetRelativeRotation(FRotator(YRotation, 0.0f, 0.0f));
+	// структура FRotator хранит аргументы в следующей последовательности : Pitch,Yaw, Roll.Так как нам необходимо определить значения по
+	// оси Y,мы устанавливаем Pitch аргумент
+	SpringArmComponent->SetRelativeRotation(FRotator(YRotation, 0.0f, 0.0f)); 
 	SpringArmComponent->bDoCollisionTest = false;
 	SpringArmComponent->bEnableCameraLag = true;
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->SetupAttachment(SpringArmComponent);
 	CameraComponent->SetFieldOfView(FOV);
-	CameraComponent->bUsePawnControlRotation = false;
-
+	CameraComponent->bUsePawnControlRotation = false; //данное условие запрещаем камере вращаться относительно SpringArmComponent.
+	
+	//запретим нашему персонажу поворачиваться в сторону камеры
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
@@ -65,6 +68,10 @@ void ALMADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ALMADefaultCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ALMADefaultCharacter::MoveRight);
+	
+	// homework 5 
+	PlayerInputComponent->BindAction("ZoomIn", IE_Pressed, this, &ALMADefaultCharacter::ZoomIn);
+	PlayerInputComponent->BindAction("ZoomOut", IE_Pressed, this, &ALMADefaultCharacter::ZoomOut);
 }
 
 void ALMADefaultCharacter::MoveForward(float Value)
@@ -76,3 +83,18 @@ void ALMADefaultCharacter::MoveRight(float Value)
 {
 	AddMovementInput(GetActorRightVector(), Value);
 }
+
+// homework 5
+void ALMADefaultCharacter::ZoomIn()
+{
+	float CurrLength = SpringArmComponent->TargetArmLength;
+	SpringArmComponent->TargetArmLength -= (CurrLength > MinLengthArm) ? LengthChange:0;
+}
+// homework 5
+void ALMADefaultCharacter::ZoomOut()
+{
+	float CurrLength = SpringArmComponent->TargetArmLength;
+	SpringArmComponent->TargetArmLength += (CurrLength < MaxLengthArm) ? LengthChange : 0;
+}
+
+
