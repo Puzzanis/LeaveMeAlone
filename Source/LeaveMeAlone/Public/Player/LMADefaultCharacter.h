@@ -8,6 +8,8 @@
 
 class UCameraComponent;
 class USpringArmComponent;
+class ULMAHealthComponent;
+class UAnimMontage;
 
 UCLASS()
 class LEAVEMEALONE_API ALMADefaultCharacter : public ACharacter
@@ -16,6 +18,9 @@ class LEAVEMEALONE_API ALMADefaultCharacter : public ACharacter
 
 public:
 	ALMADefaultCharacter();
+
+	UFUNCTION()
+	ULMAHealthComponent* GetHealthComponent() const { return HealthComponent; }  
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
@@ -32,6 +37,15 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cursor")
 	FVector CursorSize = FVector(20.0f, 40.0f, 40.0f);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components|Health")
+	ULMAHealthComponent* HealthComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UAnimMontage* DeathMontage;
+
+	UFUNCTION(BlueprintCallable)
+	bool GetSprint() { return isSprint; };
 
 	virtual void BeginPlay() override;
 
@@ -59,4 +73,29 @@ private:
 
 	void ZoomIn();
 	void ZoomOut();
+
+	void OnDeath();
+	void OnHealthChanged(float NewHealth);
+
+	void RotationPlayerOnCursor();
+
+	//homework 6
+	bool isSprint = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Stamina", meta = (ClampMin = "0", ClampMax = "100"))
+	float Stamina = 100.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Stamina")
+	float MinusStamina = 1.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Stamina")
+	float PlusStamina = 1.0f;
+
+
+	void Sprint();
+	void StopSprint();
+
+	void DecreaseStamina();
+	void IncreseStamina();
+
 };
