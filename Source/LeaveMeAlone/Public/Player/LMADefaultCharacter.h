@@ -1,4 +1,4 @@
-// LeaveMeAlone Game by Netologiya. All Rights Reserved.
+// LeaveMeAlone Game by Netologiya. All RightsReserved
 
 #pragma once
 
@@ -10,6 +10,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class ULMAHealthComponent;
 class UAnimMontage;
+class ULMAWeaponComponent;
 
 UCLASS()
 class LEAVEMEALONE_API ALMADefaultCharacter : public ACharacter
@@ -17,6 +18,7 @@ class LEAVEMEALONE_API ALMADefaultCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
+	// Sets default values for this character's properties
 	ALMADefaultCharacter();
 
 	UFUNCTION()
@@ -44,14 +46,38 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	UAnimMontage* DeathMontage;
 
-	UFUNCTION(BlueprintCallable)
-	bool GetSprint() { return isSprint; };
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
+	ULMAWeaponComponent* WeaponComponent;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float StaminaMax = 600.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float StaminaMin = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float StaminaCost = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float Stamina = StaminaMax;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float StaminaCooldown = 200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Velocity")
+	float SprintVelocity = 600.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Velocity")
+	float WalkVelocity = 300.0f;
+
+	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:
+public:	
+	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
@@ -61,41 +87,33 @@ private:
 
 	float FOV = 55.0f;
 
-	
+	bool isShift = false;
+	bool isStartCooldown = false;
+	bool isStaminaFull = true;
+	bool isSprintActive = false;
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
-	
-	//homework 5 
+
 	const float MaxLengthArm = 1400.0f; // максимальное расстояние камеры от персонажа
 	const float MinLengthArm = 500.0f;	// минимальное расстояние камеры от персонажа
 	const float LengthChange = 20.0f;	// шаг изменения расстояния до персонажа
 
 	void ZoomIn();
 	void ZoomOut();
-
+	
+	
+	
 	void OnDeath();
 	void OnHealthChanged(float NewHealth);
 
 	void RotationPlayerOnCursor();
 
-	//homework 6
-	bool isSprint = false;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Stamina", meta = (ClampMin = "0", ClampMax = "100"))
-	float Stamina = 100.0f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Stamina")
-	float MinusStamina = 1.0f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Stamina")
-	float PlusStamina = 1.0f;
-
-
 	void Sprint();
 	void StopSprint();
 
-	void DecreaseStamina();
-	void IncreseStamina();
+	void WalkOrSprint();
+	void CheckSprintActivity(const float& Value);
+	void OnStaminaChanged();
 
 };

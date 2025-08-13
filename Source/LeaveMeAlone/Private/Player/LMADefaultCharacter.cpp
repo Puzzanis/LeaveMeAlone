@@ -1,4 +1,5 @@
-// LeaveMeAlone Game by Netologiya. All Rights Reserved.
+// LeaveMeAlone Game by Netologiya. All RightsReserved
+
 
 #include "Player/LMADefaultCharacter.h"
 #include "Camera/CameraComponent.h"
@@ -7,38 +8,46 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Components/LMAHealthComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/Engine.h"
+#include "Components/LMAHealthComponent.h"
+#include "Components/LMAWeaponComponent.h"
 
+// Sets default values
 ALMADefaultCharacter::ALMADefaultCharacter()
 {
-
+ 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	SpringArmComponent->SetupAttachment(GetRootComponent());
-	SpringArmComponent->SetUsingAbsoluteRotation(true); //данное условие не позволит нашей камере поворачиваться в момент поворота персонажа
+	SpringArmComponent->SetUsingAbsoluteRotation(true); // данное условие не позволит нашей камере поворачиваться в момент поворота
+														// персонажа
 	SpringArmComponent->TargetArmLength = ArmLength;
 	// структура FRotator хранит аргументы в следующей последовательности : Pitch,Yaw, Roll.Так как нам необходимо определить значения по
 	// оси Y,мы устанавливаем Pitch аргумент
-	SpringArmComponent->SetRelativeRotation(FRotator(YRotation, 0.0f, 0.0f)); 
+	SpringArmComponent->SetRelativeRotation(FRotator(YRotation, 0.0f, 0.0f));
 	SpringArmComponent->bDoCollisionTest = false;
 	SpringArmComponent->bEnableCameraLag = true;
+
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->SetupAttachment(SpringArmComponent);
 	CameraComponent->SetFieldOfView(FOV);
-	CameraComponent->bUsePawnControlRotation = false; //данное условие запрещаем камере вращаться относительно SpringArmComponent.
-	
-	//запретим нашему персонажу поворачиваться в сторону камеры
+	CameraComponent->bUsePawnControlRotation = false; // данное условие запрещаем камере вращаться относительно SpringArmComponent.
+
+	// запретим нашему персонажу поворачиваться в сторону камеры
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
+
 	HealthComponent = CreateDefaultSubobject<ULMAHealthComponent>("HealthComponent");
+	WeaponComponent = CreateDefaultSubobject<ULMAWeaponComponent>("Weapon");
+	
 }
 
+// Called when the game starts or when spawned
 void ALMADefaultCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -47,12 +56,12 @@ void ALMADefaultCharacter::BeginPlay()
 	{
 		CurrentCursor = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), CursorMaterial, CursorSize, FVector(0));
 	}
-
-	OnHealthChanged(HealthComponent->GetHealth());
 	HealthComponent->OnDeath.AddUObject(this, &ALMADefaultCharacter::OnDeath);
+	OnHealthChanged(HealthComponent->GetHealth());
 	HealthComponent->OnHealthChanged.AddUObject(this, &ALMADefaultCharacter::OnHealthChanged);
 }
 
+// Called every frame
 void ALMADefaultCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -76,38 +85,35 @@ void ALMADefaultCharacter::Tick(float DeltaTime)
 	}
 
 
-	if (isSprint && Stamina != 0.0f)
-	{
-		DecreaseStamina();
-	}
-	if (!isSprint && Stamina != 100.0f)
-	{
-		IncreseStamina();
-	}
-	if (FMath::IsNearlyZero(Stamina))
-	{
-		StopSprint();
-	}
+	WalkOrSprint();
+
+
 }
 
+// Called to bind functionality to input
 void ALMADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ALMADefaultCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ALMADefaultCharacter::MoveRight);
-	
-	// homework 5 
+
 	PlayerInputComponent->BindAction("ZoomIn", IE_Pressed, this, &ALMADefaultCharacter::ZoomIn);
 	PlayerInputComponent->BindAction("ZoomOut", IE_Pressed, this, &ALMADefaultCharacter::ZoomOut);
 
-	// homework 5
+
 	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ALMADefaultCharacter::Sprint);
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ALMADefaultCharacter::StopSprint);
+
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, WeaponComponent, &ULMAWeaponComponent::Fire);
+	PlayerInputComponent->BindAction("Fire", IE_Released, WeaponComponent, &ULMAWeaponComponent::FireOff);
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, WeaponComponent, &ULMAWeaponComponent::Reload);
+
 }
 
 void ALMADefaultCharacter::MoveForward(float Value)
 {
+	CheckSprintActivity(Value);
 	AddMovementInput(GetActorForwardVector(), Value);
 }
 
@@ -116,18 +122,18 @@ void ALMADefaultCharacter::MoveRight(float Value)
 	AddMovementInput(GetActorRightVector(), Value);
 }
 
-// homework 5
 void ALMADefaultCharacter::ZoomIn()
 {
 	float CurrLength = SpringArmComponent->TargetArmLength;
-	SpringArmComponent->TargetArmLength -= (CurrLength > MinLengthArm) ? LengthChange:0;
+	SpringArmComponent->TargetArmLength -= (CurrLength > MinLengthArm) ? LengthChange : 0;
 }
-// homework 5
+
 void ALMADefaultCharacter::ZoomOut()
 {
 	float CurrLength = SpringArmComponent->TargetArmLength;
 	SpringArmComponent->TargetArmLength += (CurrLength < MaxLengthArm) ? LengthChange : 0;
 }
+
 
 void ALMADefaultCharacter::OnDeath() 
 {
@@ -147,7 +153,7 @@ void ALMADefaultCharacter::OnDeath()
 
 void ALMADefaultCharacter::OnHealthChanged(float NewHealth) 
 {
-	//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, FString::Printf(TEXT("Health = %f"), NewHealth));
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, FString::Printf(TEXT("Health = %f"), NewHealth));
 }
 
 void ALMADefaultCharacter::RotationPlayerOnCursor() 
@@ -166,33 +172,61 @@ void ALMADefaultCharacter::RotationPlayerOnCursor()
 	}
 }
 
-void ALMADefaultCharacter::Sprint() 
+void ALMADefaultCharacter::Sprint()
 {
-	isSprint = true;
-	GetCharacterMovement()->MaxWalkSpeed = 1000.0f;
+	isShift = true;
 }
 
 void ALMADefaultCharacter::StopSprint() 
 {
-	isSprint = false;
-	GetCharacterMovement()->MaxWalkSpeed = 300.0f;
+	isShift = false;
 }
 
-void ALMADefaultCharacter::DecreaseStamina() 
+void ALMADefaultCharacter::WalkOrSprint()
 {
-	if (isSprint)
-	{
-		Stamina -= MinusStamina;
-	}
 	
-}
-
-void ALMADefaultCharacter::IncreseStamina() 
-{
-	if (!isSprint)
+	if (!isSprintActive)
 	{
-		Stamina += MinusStamina;
+		GetCharacterMovement()->MaxWalkSpeed = WalkVelocity;
+	}
+	if (Stamina == StaminaMin)
+	{
+		isStartCooldown = true;
+	}
+
+	if (isStartCooldown)
+	{
+		Stamina = FMath::Clamp(Stamina + StaminaCost, StaminaMin, StaminaCooldown);
+		if (Stamina == StaminaCooldown)
+		{
+			isStartCooldown = false;
+		}
+	}
+	else if (!isStaminaFull && !isSprintActive)
+	{
+		Stamina = FMath::Clamp(Stamina + StaminaCost, StaminaMin, StaminaMax);
+		if (Stamina == StaminaMax)
+		{
+			isStaminaFull = true;
+		}
+		OnStaminaChanged();
 	}
 }
 
+void ALMADefaultCharacter::CheckSprintActivity(const float& Value)
+{
+	isSprintActive = false;
+	if (isShift && Value > 0 && !isStartCooldown)
+	{
+		isSprintActive = true;
+		Stamina = FMath::Clamp(Stamina - StaminaCost, StaminaMin, StaminaMax);
+		OnStaminaChanged();
+		GetCharacterMovement()->MaxWalkSpeed = SprintVelocity;
+		isStaminaFull = false;
+	}
+}
 
+void ALMADefaultCharacter::OnStaminaChanged()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("Stamina = %f"), Stamina));
+}

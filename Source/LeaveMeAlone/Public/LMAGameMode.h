@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// LeaveMeAlone Game by Netologiya. All RightsReserved
 
 #pragma once
 
@@ -13,7 +13,6 @@ UCLASS()
 class LEAVEMEALONE_API ALMAGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
-	
 public:
 	ALMAGameMode();
 };

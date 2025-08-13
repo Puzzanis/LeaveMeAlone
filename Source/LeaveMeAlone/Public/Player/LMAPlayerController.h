@@ -1,5 +1,4 @@
-
-// LeaveMeAlone Game by Netologiya. All Rights Reserved.
+// LeaveMeAlone Game by Netologiya. All RightsReserved
 
 #pragma once
 
@@ -7,13 +6,18 @@
 #include "GameFramework/PlayerController.h"
 #include "LMAPlayerController.generated.h"
 
+/**
+ * 
+ */
 UCLASS()
 class LEAVEMEALONE_API ALMAPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-
 public:
 	ALMAPlayerController();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool OnPause = false;
 
 protected:
 	virtual void BeginPlay() override;

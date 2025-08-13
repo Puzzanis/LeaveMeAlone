@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// LeaveMeAlone Game by Netologiya. All RightsReserved
 
 
 #include "LMAGameMode.h"
